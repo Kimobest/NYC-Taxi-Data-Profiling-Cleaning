@@ -27,3 +27,6 @@ Thumbs.db
 # Secrets & environment variables
 .env
 *.log
+
+# Local HTML study guides
+*.html
