@@ -1,0 +1,29 @@
+# Data files
+*.csv
+*.csv.gz
+*.parquet
+*.zip
+*.tar.gz
+
+# Python virtual environment & cache
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets & environment variables
+.env
+*.log
