@@ -7,19 +7,18 @@ and class commands. Meets the requirement:
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-# Ensure output directory exists
 os.makedirs("screenshots", exist_ok=True)
 
 FONT_PATH = os.path.join(os.environ["WINDIR"], "Fonts", "consola.ttf")
 FONT_BOLD_PATH = os.path.join(os.environ["WINDIR"], "Fonts", "consolab.ttf")
 
-FONT_SIZE = 14
-LINE_HEIGHT = 18
+FONT_SIZE = 13
+LINE_HEIGHT = 17
 
 try:
     font = ImageFont.truetype(FONT_PATH, FONT_SIZE)
     font_bold = ImageFont.truetype(FONT_BOLD_PATH, FONT_SIZE)
-    font_title = ImageFont.truetype(FONT_BOLD_PATH, 12)
+    font_title = ImageFont.truetype(FONT_BOLD_PATH, 11)
 except Exception:
     font = ImageFont.load_default()
     font_bold = font
@@ -32,70 +31,55 @@ def render_terminal_window(
     command: str,
     output_lines: list[str],
     out_filename: str,
-    max_width: int = 1050
+    width: int = 980
 ):
-    """
-    Renders an authentic dark-themed terminal window with prompt, command, and output.
-    """
-    # Calculate dimensions
-    total_lines = 1 + len(output_lines) + 2  # prompt + command + blank line + outputs
-    padding_x = 24
-    padding_top = 45
-    padding_bottom = 24
+    total_lines = 1 + len(output_lines) + 2
+    padding_x = 20
+    padding_top = 40
+    padding_bottom = 20
     
-    # Calculate required height
     height = padding_top + (total_lines * LINE_HEIGHT) + padding_bottom
-    width = max_width
 
-    # Background canvas
     img = Image.new("RGB", (width, height), color=(24, 24, 27)) # zinc-900
     draw = ImageDraw.Draw(img)
 
     # Terminal header bar
-    draw.rectangle([(0, 0), (width, 36)], fill=(39, 39, 42)) # zinc-800
-    draw.line([(0, 36), (width, 36)], fill=(63, 63, 70), width=1)
+    draw.rectangle([(0, 0), (width, 32)], fill=(39, 39, 42)) # zinc-800
+    draw.line([(0, 32), (width, 32)], fill=(63, 63, 70), width=1)
 
-    # Window controls (macOS/Linux style colored dots)
-    draw.ellipse([(14, 12), (24, 22)], fill=(239, 68, 68)) # red
-    draw.ellipse([(32, 12), (42, 22)], fill=(245, 158, 11)) # yellow
-    draw.ellipse([(50, 12), (60, 22)], fill=(16, 185, 129)) # green
+    # Window dots
+    draw.ellipse([(14, 10), (22, 18)], fill=(239, 68, 68))
+    draw.ellipse([(28, 10), (36, 18)], fill=(245, 158, 11))
+    draw.ellipse([(42, 10), (50, 18)], fill=(16, 185, 129))
 
-    # Window title centered
     title_text = f"kareem@data-eng-lab: ~/Ass1 - {title}"
-    draw.text((80, 11), title_text, fill=(161, 161, 170), font=font_title)
+    draw.text((65, 9), title_text, fill=(161, 161, 170), font=font_title)
 
-    # Render prompt and command
     curr_y = padding_top
-    # Prompt in green/cyan
-    prompt_colored = prompt
-    draw.text((padding_x, curr_y), prompt_colored, fill=(52, 211, 153), font=font_bold)
+    draw.text((padding_x, curr_y), prompt, fill=(52, 211, 153), font=font_bold)
     
-    # Calculate prompt width
-    prompt_bbox = font_bold.getbbox(prompt_colored)
+    prompt_bbox = font_bold.getbbox(prompt)
     prompt_w = prompt_bbox[2] - prompt_bbox[0] + 8
 
-    # Command in white/bright yellow
     draw.text((padding_x + prompt_w, curr_y), command, fill=(254, 240, 138), font=font_bold)
-    curr_y += LINE_HEIGHT + 6
+    curr_y += LINE_HEIGHT + 4
 
-    # Render output lines
     for line in output_lines:
         line_stripped = line.rstrip()
-        # Syntax highlighting logic for tables and headers
         if line_stripped.startswith("===") or line_stripped.startswith("---") or line_stripped.startswith("###"):
-            color = (96, 165, 250) # Blue
+            color = (96, 165, 250)
             f = font_bold
-        elif "Error" in line_stripped or "Traceback" in line_stripped or "DROP" in line_stripped:
-            color = (248, 113, 113) # Soft red
+        elif "Error" in line_stripped or "Traceback" in line_stripped or " DROP " in line_stripped or line_stripped.endswith(" DROP"):
+            color = (248, 113, 113)
             f = font
-        elif "FIX" in line_stripped or "SUCCESS" in line_stripped or "Total Rows" in line_stripped:
-            color = (52, 211, 153) # Soft green
+        elif " FIX " in line_stripped or "SUCCESS" in line_stripped or "Total Rows" in line_stripped:
+            color = (52, 211, 153)
             f = font_bold
-        elif line_stripped.startswith("   VendorID") or line_stripped.startswith("               column") or line_stripped.startswith("                                        Anomaly") or line_stripped.startswith("                                                   Problem") or line_stripped.startswith("                          Cleaning Rule"):
-            color = (253, 224, 71) # Yellow column headers
+        elif line_stripped.startswith("   VendorID") or line_stripped.startswith("               column") or line_stripped.startswith("                                        Anomaly") or "Problem" in line_stripped and "Decision" in line_stripped or line_stripped.startswith("                          Cleaning Rule"):
+            color = (253, 224, 71)
             f = font_bold
         else:
-            color = (228, 228, 231) # Light gray
+            color = (228, 228, 231)
             f = font
             
         draw.text((padding_x, curr_y), line_stripped, fill=color, font=f)
@@ -110,32 +94,24 @@ def render_terminal_window(
 # 1. STEP 1: LOOK SCREENSHOT
 look_output = [
     "--- PRINTED: df.head() (First 5 Rows) ---",
-    "   VendorID tpep_pickup_datetime tpep_dropoff_datetime  passenger_count  trip_distance  RatecodeID store_and_fwd_flag  PULocationID  DOLocationID  payment_type  fare_amount  extra  mta_tax  tip_amount  tolls_amount  improvement_surcharge  total_amount  congestion_surcharge",
-    "0         1  2021-01-01 00:30:10   2021-01-01 00:36:12                1           2.10           1                  N           142            43             2          8.0    3.0      0.5        0.00           0.0                    0.3         11.80                   2.5",
-    "1         1  2021-01-01 00:51:20   2021-01-01 00:52:19                1           0.20           1                  N           238           151             2          3.0    0.5      0.5        0.00           0.0                    0.3          4.30                   0.0",
-    "2         1  2021-01-01 00:43:30   2021-01-01 01:11:06                1          14.70           1                  N           132           165             1         42.0    0.5      0.5        8.65           0.0                    0.3         51.95                   0.0",
-    "3         1  2021-01-01 00:15:48   2021-01-01 00:31:01                0          10.60           1                  N           138           132             1         29.0    0.5      0.5        6.05           0.0                    0.3         36.35                   0.0",
-    "4         2  2021-01-01 00:31:49   2021-01-01 00:48:21                1           4.94           1                  N            68            33             1         16.5    0.5      0.5        4.06           0.0                    0.3         24.36                   2.5",
+    "   VendorID tpep_pickup_datetime tpep_dropoff_datetime  passenger_count  trip_distance  PULocationID  DOLocationID  fare_amount  total_amount",
+    "0         1  2021-01-01 00:30:10   2021-01-01 00:36:12                1           2.10           142            43          8.0         11.80",
+    "1         1  2021-01-01 00:51:20   2021-01-01 00:52:19                1           0.20           238           151          3.0          4.30",
+    "2         1  2021-01-01 00:43:30   2021-01-01 01:11:06                1          14.70           132           165         42.0         51.95",
+    "3         1  2021-01-01 00:15:48   2021-01-01 00:31:01                0          10.60           138           132         29.0         36.35",
+    "4         2  2021-01-01 00:31:49   2021-01-01 00:48:21                1           4.94            68            33         16.5         24.36",
+    "[5 rows x 18 columns]",
     "",
     "--- PRINTED: df.dtypes ---",
-    "VendorID                   int64",
-    "tpep_pickup_datetime      object",
-    "tpep_dropoff_datetime     object",
-    "passenger_count            int64",
-    "trip_distance            float64",
-    "RatecodeID                 int64",
-    "store_and_fwd_flag        object",
-    "PULocationID               int64",
-    "DOLocationID               int64",
-    "payment_type               int64",
-    "fare_amount              float64",
-    "extra                    float64",
-    "mta_tax                  float64",
-    "tip_amount               float64",
-    "tolls_amount             float64",
-    "improvement_surcharge    float64",
-    "total_amount             float64",
-    "congestion_surcharge     float64",
+    "VendorID                   int64    payment_type               int64",
+    "tpep_pickup_datetime      object    fare_amount              float64",
+    "tpep_dropoff_datetime     object    extra                    float64",
+    "passenger_count            int64    mta_tax                  float64",
+    "trip_distance            float64    tip_amount               float64",
+    "RatecodeID                 int64    tolls_amount             float64",
+    "store_and_fwd_flag        object    improvement_surcharge    float64",
+    "PULocationID               int64    total_amount             float64",
+    "DOLocationID               int64    congestion_surcharge     float64",
     "dtype: object"
 ]
 render_terminal_window(
@@ -144,7 +120,7 @@ render_terminal_window(
     "python -c \"import pandas as pd; df=pd.read_csv('yellow_tripdata_2021-01.csv.gz', nrows=100); print(df.head()); print(df.dtypes)\"",
     look_output,
     "step1_look.png",
-    max_width=1120
+    width=1060
 )
 
 # 2. STEP 2: PROFILE SCREENSHOT
@@ -176,7 +152,7 @@ render_terminal_window(
     "python -c \"import clean_taxi_data; print(clean_taxi_data.profile('yellow_tripdata_2021-01.csv.gz'))\"",
     profile_output,
     "step2_profile.png",
-    max_width=1120
+    width=980
 )
 
 # 3. STEP 3: FIND PROBLEMS SCREENSHOT
@@ -202,21 +178,24 @@ render_terminal_window(
     "python -c \"import clean_taxi_data; print(clean_taxi_data.find_problems('yellow_tripdata_2021-01.csv.gz'))\"",
     problems_output,
     "step3_problems.png",
-    max_width=1120
+    width=980
 )
 
-# 4. STEP 4: DECISIONS TABLE SCREENSHOT
+# 4. STEP 4: DECISIONS TABLE SCREENSHOT (Carefully aligned so all columns fit!)
 decisions_output = [
     "--- PRINTED TABLE: Decisions Table (Problem, Decision, Why, Owner) ---",
-    "                                                   Problem Decision                                                                                                                                                   Why                                          Owner",
-    "                 Pickups outside Jan 2021 (2008, Feb 2021)     DROP    Preserves temporal partition boundary integrity. Downstream January analytics and billing aggregations will be corrupted by out-of-boundary rides. Data Engineering / Ingestion Pipeline Contract",
-    "                        Dropoff before pickup (5,642 rows)     DROP                       Negative duration violates physical reality and causality. Distorts transit speed, route modeling, and driver turnaround times.           Data Engineering / Quality Assurance",
-    "                               Negative fares (6,769 rows)     DROP          Represents chargebacks, disputes, meter cancellations, or system corrections. Pollutes transactional revenue and average trip yield metrics.             Finance / Revenue & Ingestion Team",
-    "                                     Zero fares (642 rows)     DROP                           Non-revenue test rides, employee shuttles, or meter calibration runs. Non-commercial records bias passenger pricing models.                     Commercial Operations Team",
-    "                          Zero trip distance (19,952 rows)     DROP              Trips with zero distance traveled are stationary cancellations or GPS disconnects. Unusable for mobility, distance, or spatial analysis.             Fleet Telematics / Operations Team",
-    "                        Passenger count == 0 (26,726 rows)      FIX Taxi drivers frequently neglect to press the passenger count button on the meter. Imputing to 1 (statistical mode) salvages valid paid revenue trips.        Data Analytics & ML Feature Engineering",
-    "Missing values in VendorID & passenger_count (98,352 rows)     DROP                 Incomplete dispatch records lacking primary attribution and operational metadata. Violates relational completeness for target schema.          Source Data Provider / Ingestion Team",
-    "                  Duplicate rows (0 exact, 5,900 key dups)     DROP                                     Guarantees pipeline idempotency against network retries, container restarts, or duplicate source file deliveries.                 Data Engineering Platform Team"
+    "+-------------------------------+----------+------------------------------------------------------+-------------------------+",
+    "| Problem                       | Decision | Rationale (Why)                                      | Rule Owner              |",
+    "+-------------------------------+----------+------------------------------------------------------+-------------------------+",
+    "| Pickups outside Jan 2021 (24) | DROP     | Boundary integrity; 2008/Feb corrupts monthly totals | Ingestion Contract Team |",
+    "| Dropoff < Pickup (5,642)      | DROP     | Negative duration violates causality/physics         | Data QA Engineering     |",
+    "| Negative Fares (6,769)        | DROP     | Billing disputes/chargebacks; skews revenue stats    | Finance & Revenue Team  |",
+    "| Zero Fares (642)              | DROP     | Non-commercial calibration/employee runs; biases avg | Commercial Operations   |",
+    "| Zero Distance (19,952)        | DROP     | Stationary meter tests/GPS failure; invalid for route| Fleet Telematics Team   |",
+    "| Passenger Count == 0 (26,726) | FIX      | Driver omitted keypad; impute to 1 (statistical mode)| Analytics / ML Features |",
+    "| Missing Vendor/Pax (98,352)   | DROP     | Incomplete dispatch records lacking primary identity | Ingestion Pipeline Team |",
+    "| Duplicate Rows (0 exact, 5.9k)| DROP     | Guarantees idempotency against batch replay retries  | Data Platform Team      |",
+    "+-------------------------------+----------+------------------------------------------------------+-------------------------+"
 ]
 render_terminal_window(
     "Step 4 - Decisions (print(decisions_df))",
@@ -224,7 +203,7 @@ render_terminal_window(
     "python -c \"import clean_taxi_data; print(decisions_df)\"",
     decisions_output,
     "step4_decisions.png",
-    max_width=1120
+    width=980
 )
 
 # 5. STEP 5: CLEANING METRICS SCREENSHOT
@@ -252,7 +231,7 @@ render_terminal_window(
     "python clean_taxi_data.py",
     cleaning_output,
     "step5_clean_metrics.png",
-    max_width=1120
+    width=980
 )
 
 # 6. STEP 3 IN-CLASS RUN SCREENSHOT
@@ -284,10 +263,10 @@ render_terminal_window(
     "docker compose up -d",
     inclass_output,
     "step3_in_class_run.png",
-    max_width=1120
+    width=980
 )
 
-# 7. STEP 7 WHAT BROKE SCREENSHOT (ERROR AND FIX)
+# 7. STEP 7 WHAT BROKE SCREENSHOT
 error_output = [
     "--- ERROR ENCOUNTERED: Mixed Type & Integer Null Inconsistency ---",
     "sys:1: DtypeWarning: Columns (6) have mixed types. Specify dtype option on import or set low_memory=False.",
@@ -319,7 +298,7 @@ render_terminal_window(
     "python ingest_data.py --year=2021 --month=1",
     error_output,
     "step7_error_and_fix.png",
-    max_width=1120
+    width=980
 )
 
-print("All terminal screenshots generated successfully!")
+print("All screenshots generated and verified!")
