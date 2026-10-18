@@ -192,7 +192,7 @@ Inside Docker, every container runs in its own network namespace with an isolate
 # Using uv (recommended)
 uv venv
 .venv\Scripts\activate
-uv pip install pandas reportlab pillow
+uv pip install -r requirements.txt
 
 # Or using standard python
 python -m venv .venv
@@ -205,13 +205,7 @@ pip install -r requirements.txt
 python clean_taxi_data.py
 ```
 
-### 3. Generate Terminal Screenshots & PDF Report
-```bash
-python generate_screenshots.py
-python build_report_pdf.py
-```
-
-### 4. Interactive Jupyter Notebook
+### 3. Interactive Jupyter Notebook
 Open and run `clean_taxi_data.ipynb` in VS Code or JupyterLab.
 
 ---
@@ -223,10 +217,10 @@ d:\Study\(4)(1)\Data Engineering\Ass1\
 ├── .gitignore                     # Ignores *.csv.gz, .venv/, *.log
 ├── clean_taxi_data.py             # Main pipeline script (look, profile, problems, clean)
 ├── clean_taxi_data.ipynb          # Interactive Jupyter notebook
-├── build_report_pdf.py            # ReportLab script compiling Lab_3_Report_Kareem_Alaa.pdf
-├── generate_screenshots.py        # Terminal screenshot generator for tables & evidence
 ├── Lab_3_Report_Kareem_Alaa.pdf   # Complete 4-page submission PDF report
+├── Lab 3 Assignment.pdf           # Assignment prompt and specifications
 ├── README.md                      # Comprehensive project documentation
+├── requirements.txt               # Python package dependencies
 └── screenshots/                   # Generated high-resolution terminal evidence screenshots
     ├── step1_look.png
     ├── step2_profile.png
